@@ -1,4 +1,4 @@
-package ch.feol.eo4j;
+package ch.feol.eo4j.optimize;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -6,6 +6,8 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
 import org.junit.jupiter.api.Test;
+
+import ch.feol.eo4j.simulate.SimulationTimerService;
 
 class ManagedBoilerTest {
 
@@ -15,7 +17,7 @@ class ManagedBoilerTest {
 		SimulationTimerService timerService = new SimulationTimerService();
 		Boiler boiler = new Boiler("test", 500, 10);
 
-		ManagedBoiler testee = new ManagedBoiler(boiler, timerService);
+		ManagedBoiler testee = new ManagedBoiler(boiler, timerService, 1, 40);
 
 		// Act
 		testee.turnOn();
@@ -32,15 +34,15 @@ class ManagedBoilerTest {
 		SimulationTimerService timerService = new SimulationTimerService();
 		Boiler boiler = new Boiler("test", 500, 10);
 
-		ManagedBoiler testee = new ManagedBoiler(boiler, timerService);
+		ManagedBoiler testee = new ManagedBoiler(boiler, timerService, 1, 40);
 
 		// Act
 		testee.turnOn();
-		timerService.sleepSeconds(17 * 60);
+		timerService.sleepMinutes(17);
 		testee.turnOff();
-		timerService.sleepSeconds(4 * 60);
+		timerService.sleepMinutes(4);
 		testee.turnOn();
-		timerService.sleepSeconds(3 * 60);
+		timerService.sleepMinutes(3);
 		testee.turnOff();
 
 		// Assert

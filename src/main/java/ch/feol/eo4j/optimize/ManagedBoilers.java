@@ -1,6 +1,7 @@
-package ch.feol.eo4j;
+package ch.feol.eo4j.optimize;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -13,12 +14,18 @@ public class ManagedBoilers {
 
 	private Duration onDurationOffset = null;
 
+	private TimerService timerService;
+
+	private int limitHours;
+
 	/**
 	 * @param onDurationOffset The offset to add to the least active boilers when
 	 *                         determining if a boiler switch is to take place.
 	 */
-	public ManagedBoilers(Duration onDurationOffset) {
+	public ManagedBoilers(Duration onDurationOffset, int limitHours, TimerService timerService) {
 		this.onDurationOffset = onDurationOffset;
+		this.limitHours = limitHours;
+		this.timerService = timerService;
 	}
 
 	public void add(ManagedBoiler managedBoiler) {
@@ -81,7 +88,9 @@ public class ManagedBoilers {
 	 * @return the boiler turned on or an empty optional.
 	 * 
 	 */
-	public Optional<ManagedBoiler> turnOn(double surplusPowerKiloW, Period limit) {
+	public Optional<ManagedBoiler> turnOn(double surplusPowerKiloW) {
+
+		Period limit = getLimit();
 
 		ManagedBoiler leastActive = null;
 		for (ManagedBoiler boiler : getEligibleBoilersToTurnOn(surplusPowerKiloW)) {
@@ -102,6 +111,21 @@ public class ManagedBoilers {
 	}
 
 	/**
+	 * Calculate the actual limit period.
+	 * <p>
+	 * The limit period is the period in the past, which is used to measure the
+	 * activity of the boiler, e.g. the duration during which it was turned on.
+	 * 
+	 * @return
+	 */
+	private Period getLimit() {
+
+		// Calculate the actual limit period
+		LocalDateTime actualTimestamp = timerService.getActualTimestamp();
+		return new Period(actualTimestamp.minusHours(limitHours), actualTimestamp);
+	}
+
+	/**
 	 * Turn the most active and ON boiler OFF if at least one boilers lower
 	 * threshold power is bigger than the surplus power.
 	 * 
@@ -109,7 +133,9 @@ public class ManagedBoilers {
 	 * @param limit             The limit to determine the total on duration.
 	 * @return the boiler turned off or an empty optional.
 	 */
-	public Optional<ManagedBoiler> turnOff(double surplusPowerKiloW, Period limit) {
+	public Optional<ManagedBoiler> turnOff(double surplusPowerKiloW) {
+
+		Period limit = getLimit();
 
 		boolean turnOff = false;
 		ManagedBoiler mostActive = null;
@@ -133,11 +159,13 @@ public class ManagedBoilers {
 		}
 	}
 
-	public Optional<SwitchResult> switchBoiler(Period limit) {
+	public void switchBoiler() {
+
+		Period limit = getLimit();
 
 		// No neet to turn active boiler OFF if there are no OFF boilers
 		if (getTurnedOffBoilers().size() == 0) {
-			return Optional.empty();
+			return;
 		}
 
 		// Determine boiler which was the least active
@@ -178,9 +206,6 @@ public class ManagedBoilers {
 		if (turnOffCandidate != null) {
 			turnOffCandidate.turnOff();
 			leastActive.turnOn();
-			return Optional.of(new SwitchResult(leastActive, turnOffCandidate));
-		} else {
-			return Optional.empty();
 		}
 	}
 
@@ -229,13 +254,14 @@ public class ManagedBoilers {
 		return builder.toString();
 	}
 
-	public void turnNextOn() {
+	public Optional<ManagedBoiler> turnNextOn() {
 		for (ManagedBoiler boiler : boilers) {
 			if (!boiler.isTurnedOn()) {
 				boiler.turnOn();
-				break;
+				return Optional.of(boiler);
 			}
 		}
+		return Optional.empty();
 	}
 
 	public void turnAllOn() {

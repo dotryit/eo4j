@@ -1,4 +1,4 @@
-package ch.feol.eo4j;
+package ch.feol.eo4j.optimize;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

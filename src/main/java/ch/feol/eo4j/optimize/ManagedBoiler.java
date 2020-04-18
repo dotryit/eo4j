@@ -1,46 +1,71 @@
-package ch.feol.eo4j;
+package ch.feol.eo4j.optimize;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ManagedBoiler {
 
-	private static final double UPPER_TRESHOLD_FACTOR = 1.2;
+	private static final int ON_PERIOD_KEEP_DAYS = 5;
 
-	private static final double LOWER_TRESHOLD_FACTOR = 0.3;
+	private static final double UPPER_TRESHOLD_FACTOR = 1.3;
+
+	private static final double LOWER_TRESHOLD_FACTOR = 0.1;
 
 	private Boiler boiler;
 
 	private TimerService timerService = null;
 
-	private List<Period> activePeriods = new ArrayList<>();
+	private List<Period> onPeriods = new ArrayList<>();
 
 	private Period lastOnPeriod = null;
 
-	private BoilerState state = BoilerState.OFF;
+	private boolean power = false;
 
-	public ManagedBoiler(Boiler boiler, TimerService timerService) {
+	private int persons;
+
+	private int dailyUsagePerPerson;
+
+	public ManagedBoiler(Boiler boiler, TimerService timerService, int persons, int dailyUsagePerPerson) {
 		this.boiler = boiler;
 		this.timerService = timerService;
+		this.persons = persons;
+		this.dailyUsagePerPerson = dailyUsagePerPerson;
 	}
 
 	public void turnOn() {
-		if (state == BoilerState.ON) {
+		if (power) {
 			return;
 		} else {
-			state = BoilerState.ON;
+			power = true;
 			// Create new period
 			lastOnPeriod = new Period(timerService.getActualTimestamp());
-			activePeriods.add(lastOnPeriod);
+			onPeriods.add(lastOnPeriod);
+			cleanPeriods();
 		}
 	}
 
+	private void cleanPeriods() {
+		List<Period> newList = new ArrayList<>();
+		for (Period onPeriod : onPeriods) {
+			if (onPeriod.isOpen()) {
+				newList.add(onPeriod);
+			} else {
+				long ageInDays = onPeriod.getEndAt().get().until(timerService.getActualTimestamp(), ChronoUnit.DAYS);
+				if (ageInDays < ON_PERIOD_KEEP_DAYS) {
+					newList.add(onPeriod);
+				}
+			}
+		}
+		onPeriods = newList;
+	}
+
 	public void turnOff() {
-		if (state == BoilerState.OFF) {
+		if (!power) {
 			return;
 		} else {
-			state = BoilerState.OFF;
+			power = false;
 			lastOnPeriod.end(timerService.getActualTimestamp());
 		}
 	}
@@ -54,9 +79,8 @@ public class ManagedBoiler {
 	}
 
 	public Duration getTotalActive(Period limit) {
-
 		Duration duration = Duration.ZERO;
-		for (Period onPeriod : activePeriods) {
+		for (Period onPeriod : onPeriods) {
 			duration = duration.plus(onPeriod.getDuration(limit, timerService.getActualTimestamp()));
 		}
 		return duration;
@@ -72,7 +96,7 @@ public class ManagedBoiler {
 	 * @return true if this boiler is eligible.
 	 */
 	public boolean isEligibleToSwitchOn(double surplusPowerKiloW) {
-		if (state == BoilerState.ON) {
+		if (power) {
 			return false;
 		}
 		return getNominalPowerUpperThresholdKiloW() < surplusPowerKiloW;
@@ -84,14 +108,6 @@ public class ManagedBoiler {
 
 	public double getNominalPowerLowerThresholdKiloW() {
 		return boiler.getNominalPowerKiloW() * LOWER_TRESHOLD_FACTOR;
-	}
-
-	public boolean isTurnedOn() {
-		return state == BoilerState.ON;
-	}
-
-	public BoilerState getState() {
-		return state;
 	}
 
 	@Override
@@ -117,5 +133,21 @@ public class ManagedBoiler {
 		} else if (!boiler.equals(other.boiler))
 			return false;
 		return true;
+	}
+
+	public int getPersons() {
+		return persons;
+	}
+
+	public int getDailyUsagePerPerson() {
+		return dailyUsagePerPerson;
+	}
+
+	public boolean isTurnedOn() {
+		return power;
+	}
+
+	public boolean isPower() {
+		return power;
 	}
 }

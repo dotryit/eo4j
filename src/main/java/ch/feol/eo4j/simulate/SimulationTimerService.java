@@ -1,8 +1,9 @@
-package ch.feol.eo4j;
+package ch.feol.eo4j.simulate;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+
+import ch.feol.eo4j.optimize.TimerService;
 
 public class SimulationTimerService implements TimerService {
 
@@ -13,19 +14,13 @@ public class SimulationTimerService implements TimerService {
 		this.localDateTime = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS);
 	}
 
+	public SimulationTimerService(LocalDateTime start) {
+		this.localDateTime = start;
+	}
+
 	@Override
 	public LocalDateTime getActualTimestamp() {
 		return localDateTime;
-	}
-
-	@Override
-	public LocalTime getActualTime() {
-		return LocalTime.from(localDateTime);
-	}
-
-	@Override
-	public void sleepSeconds(int seconds) {
-		localDateTime = localDateTime.plusSeconds(seconds);
 	}
 
 	@Override

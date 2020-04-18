@@ -1,4 +1,4 @@
-package ch.feol.eo4j;
+package ch.feol.eo4j.optimize;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -7,7 +7,7 @@ public class Boiler {
 
 	private static final long TEMPERATURE_DIFFERENCE = 50;
 
-	private static final double THERMAL_CAPACITY_KILOJOULE_PER_LITER_KELVIN = 4.2;
+	public static final double THERMAL_CAPACITY_KILOJOULE_PER_LITER_KELVIN = 4.2;
 
 	private String id = null;
 

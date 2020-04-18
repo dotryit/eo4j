@@ -1,4 +1,4 @@
-package ch.feol.eo4j;
+package ch.feol.eo4j.optimize;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
