@@ -21,7 +21,7 @@ public class SolarLog {
    public Data read() throws SolarLogException {
 
       Builder builder = HttpRequest.newBuilder();
-      builder.POST(HttpRequest.BodyPublishers.ofString(""));
+      builder.POST(HttpRequest.BodyPublishers.ofString("{\"801\":{\"170s\":null}}"));
       builder.uri(URI.create("http://" + address + "/getjp"));
       builder.header("Content-Type", "application/json");
       HttpRequest request = builder.build();
