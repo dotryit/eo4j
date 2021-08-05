@@ -1,4 +1,4 @@
-package ch.feol.eo4j;
+package ch.feol.eo4j.simulate;
 
 import java.time.Duration;
 
@@ -12,10 +12,6 @@ import ch.feol.eo4j.optimize.OwnUsageOptimizationRunner;
 import ch.feol.eo4j.optimize.ReportingSystem;
 import ch.feol.eo4j.optimize.RunController;
 import ch.feol.eo4j.optimize.TimerService;
-import ch.feol.eo4j.simulate.SimulatedBoilers;
-import ch.feol.eo4j.simulate.SimulatedPVA;
-import ch.feol.eo4j.simulate.SimulationTimerService;
-import ch.feol.eo4j.simulate.UsageSimulatedBoilerFactory;
 
 public class OneDaySimulation {
 
